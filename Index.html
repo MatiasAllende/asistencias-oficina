@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alta de tickets</title>
+    <style>
+      :root {
+        --ink: #1c1917;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --paper: #f6f5f2;
+        --card: #fffcf8;
+        --accent: #12372d;
+        --accent-press: #0c2820;
+        --danger: #9f1239;
+        --danger-bg: #fff1f2;
+        --ok: #166534;
+        --ok-bg: #f0fdf4;
+        --dup: #92400e;
+        --dup-bg: #fffbeb;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, #e7efe9 0, transparent 220px),
+          var(--paper);
+        color: var(--ink);
+        font: 16px/1.45 "Avenir Next", "Segoe UI", sans-serif;
+      }
+
+      main {
+        width: min(34rem, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 3.5rem 0 4rem;
+      }
+
+      header h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.85rem;
+        font-weight: 650;
+        letter-spacing: -0.03em;
+      }
+
+      header p {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+      }
+
+      form, .resultado {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 1.25rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.85rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+
+      label span {
+        display: block;
+        margin-bottom: 0.35rem;
+      }
+
+      .ayuda {
+        display: block;
+        margin-top: 0.3rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 450;
+      }
+
+      input, textarea {
+        width: 100%;
+        border: 1px solid #d6d3d1;
+        border-radius: 8px;
+        padding: 0.7rem 0.75rem;
+        color: var(--ink);
+        background: #fff;
+        font: inherit;
+      }
+
+      textarea { min-height: 7.5rem; resize: vertical; }
+
+      input:focus, textarea:focus {
+        outline: 2px solid #9cbcb0;
+        border-color: var(--accent);
+      }
+
+      .combo { position: relative; }
+
+      .opciones {
+        position: absolute;
+        z-index: 5;
+        left: 0;
+        right: 0;
+        margin: 0.25rem 0 0;
+        padding: 0.25rem;
+        list-style: none;
+        background: #fff;
+        border: 1px solid #d6d3d1;
+        border-radius: 8px;
+        max-height: 12rem;
+        overflow: auto;
+        box-shadow: 0 8px 20px rgba(28, 25, 23, 0.08);
+      }
+
+      .opciones[hidden] { display: none; }
+
+      .opciones li {
+        padding: 0.45rem 0.6rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+
+      .opciones li.activa,
+      .opciones li:hover { background: #e7efe9; }
+
+      .opciones li.vacio {
+        color: var(--muted);
+        cursor: default;
+        font-weight: 450;
+      }
+
+      .opciones li.vacio:hover { background: transparent; }
+
+      button[type="submit"] {
+        width: 100%;
+        margin-top: 0.35rem;
+        border: 0;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        background: var(--accent);
+        color: #f8faf8;
+        font: inherit;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      button[type="submit"]:hover { background: var(--accent-press); }
+      button[type="submit"]:disabled { opacity: 0.6; cursor: progress; }
+
+      .resultado {
+        margin-top: 1rem;
+        display: none;
+      }
+
+      .resultado.visible { display: block; }
+      .resultado.Creado { background: var(--ok-bg); border-color: #bbf7d0; color: var(--ok); }
+      .resultado.Duplicado { background: var(--dup-bg); border-color: #fde68a; color: var(--dup); }
+      .resultado.Error { background: var(--danger-bg); border-color: #fecdd3; color: var(--danger); }
+
+      .resultado a { color: inherit; font-weight: 700; }
+
+      footer {
+        margin-top: 1.25rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      footer a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Alta de ticket</h1>
+        <p>Completá los datos y se crea el issue en Jira. El resultado queda en la planilla.</p>
+      </header>
+
+      <form id="alta">
+        <label>
+          <span>Email del solicitante</span>
+          <input id="email" name="email" type="email" autocomplete="email" required />
+          <small class="ayuda">El email con el que esa persona figura en Jira.</small>
+        </label>
+        <label>
+          <span>Problema</span>
+          <div class="combo" id="combo-problema">
+            <input id="problema" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-problema" autocomplete="off" required />
+            <ul class="opciones" id="lista-problema" role="listbox" hidden></ul>
+          </div>
+          <small class="ayuda">Escribí para filtrar y elegí una opción.</small>
+        </label>
+        <label>
+          <span>Técnico</span>
+          <div class="combo" id="combo-tecnico">
+            <input id="tecnico" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-tecnico" autocomplete="off" required />
+            <ul class="opciones" id="lista-tecnico" role="listbox" hidden></ul>
+          </div>
+        </label>
+        <label>
+          <span>Tipo de usuario</span>
+          <div class="combo" id="combo-tipo">
+            <input id="tipoUsuario" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-tipo" autocomplete="off" required />
+            <ul class="opciones" id="lista-tipo" role="listbox" hidden></ul>
+          </div>
+        </label>
+        <label>
+          <span>Resumen</span>
+          <input id="resumen" name="resumen" type="text" maxlength="255" required />
+        </label>
+        <label>
+          <span>Detalle</span>
+          <textarea id="detalle" name="detalle"></textarea>
+          <small class="ayuda">Opcional. Se copia a la descripción del ticket.</small>
+        </label>
+        <button id="enviar" type="submit">Crear ticket</button>
+      </form>
+
+      <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
+
+      <footer>
+        <a id="historial" href="<?= spreadsheetUrl ?>" target="_blank" rel="noopener">Ver historial</a>
+      </footer>
+    </main>
+
+    <script>
+      var CATALOGO = <?!= catalogoJson ?>;
+      var form = document.getElementById('alta');
+      var boton = document.getElementById('enviar');
+      var caja = document.getElementById('resultado');
+      var problema = iniciarCombo('combo-problema', CATALOGO.problemas);
+      var tecnico = iniciarCombo('combo-tecnico', CATALOGO.tecnicos);
+      var tipoUsuario = iniciarCombo('combo-tipo', CATALOGO.tipos);
+
+      form.addEventListener('submit', function (evento) {
+        evento.preventDefault();
+        var problemaValor = problema.valor();
+        var tecnicoValor = tecnico.valor();
+        var tipoValor = tipoUsuario.valor();
+        if (!problemaValor || !tecnicoValor || !tipoValor) {
+          terminar({
+            ok: false,
+            estado: 'Error',
+            mensaje: 'Elegí problema, técnico y tipo de usuario de las listas.'
+          });
+          return;
+        }
+
+        boton.disabled = true;
+        boton.textContent = 'Creando…';
+        mostrar('Enviando a Jira…', '');
+
+        google.script.run
+          .withSuccessHandler(function (respuesta) {
+            terminar(respuesta || {
+              ok: false,
+              estado: 'Error',
+              mensaje: 'La alta no devolvió un resultado.'
+            });
+          })
+          .withFailureHandler(function (error) {
+            terminar({
+              ok: false,
+              estado: 'Error',
+              mensaje: (error && error.message) ? error.message : 'No se pudo completar el alta.'
+            });
+          })
+          .crearTicket({
+            email: document.getElementById('email').value,
+            problema: problemaValor,
+            tecnico: tecnicoValor,
+            tipoUsuario: tipoValor,
+            resumen: document.getElementById('resumen').value,
+            detalle: document.getElementById('detalle').value
+          });
+      });
+
+      function iniciarCombo(id, opciones) {
+        var raiz = document.getElementById(id);
+        var input = raiz.querySelector('input');
+        var lista = raiz.querySelector('ul');
+        var indice = -1;
+        var listaActual = opciones.slice();
+
+        function plegar(valor) {
+          return String(valor || '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+        }
+
+        function coincidencias() {
+          var texto = plegar(input.value);
+          if (!texto) return opciones.slice();
+          return opciones.filter(function (opcion) {
+            return plegar(opcion).indexOf(texto) !== -1;
+          });
+        }
+
+        function exacta() {
+          var texto = plegar(input.value);
+          var i;
+          for (i = 0; i < opciones.length; i++) {
+            if (plegar(opciones[i]) === texto) return opciones[i];
+          }
+          return '';
+        }
+
+        function pintar(abierta) {
+          listaActual = coincidencias();
+          lista.replaceChildren();
+          if (!listaActual.length) {
+            var vacio = document.createElement('li');
+            vacio.className = 'vacio';
+            vacio.textContent = 'Sin coincidencias';
+            lista.appendChild(vacio);
+          }
+          listaActual.forEach(function (opcion, i) {
+            var item = document.createElement('li');
+            item.setAttribute('role', 'option');
+            item.textContent = opcion;
+            if (i === indice) item.className = 'activa';
+            item.addEventListener('mousedown', function (evento) {
+              evento.preventDefault();
+              elegir(opcion);
+            });
+            lista.appendChild(item);
+          });
+          var visible = abierta && document.activeElement === input;
+          lista.hidden = !visible;
+          input.setAttribute('aria-expanded', visible ? 'true' : 'false');
+        }
+
+        function elegir(opcion) {
+          input.value = opcion;
+          indice = -1;
+          lista.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+        }
+
+        input.addEventListener('focus', function () {
+          indice = -1;
+          pintar(true);
+        });
+        input.addEventListener('input', function () {
+          indice = -1;
+          pintar(true);
+        });
+        input.addEventListener('keydown', function (evento) {
+          var items = coincidencias();
+          if (evento.key === 'ArrowDown') {
+            evento.preventDefault();
+            if (!items.length) return;
+            indice = Math.min(indice + 1, items.length - 1);
+            pintar(true);
+          } else if (evento.key === 'ArrowUp') {
+            evento.preventDefault();
+            if (!items.length) return;
+            indice = Math.max(indice - 1, 0);
+            pintar(true);
+          } else if (evento.key === 'Enter' && !lista.hidden && items.length) {
+            evento.preventDefault();
+            elegir(items[indice >= 0 ? indice : 0]);
+          } else if (evento.key === 'Escape') {
+            lista.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+          }
+        });
+        input.addEventListener('blur', function () {
+          var canonica = exacta();
+          if (canonica) input.value = canonica;
+          else if (plegar(input.value) && coincidencias().length === 1) input.value = coincidencias()[0];
+          else if (plegar(input.value)) input.value = '';
+          lista.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+        });
+
+        return {
+          valor: function () {
+            return exacta();
+          }
+        };
+      }
+
+      function terminar(respuesta) {
+        boton.disabled = false;
+        boton.textContent = 'Crear ticket';
+        caja.replaceChildren();
+        caja.className = 'resultado visible ' + (respuesta.estado || 'Error');
+
+        var texto = document.createElement('p');
+        texto.textContent = respuesta.mensaje || 'Listo.';
+        caja.appendChild(texto);
+
+        if (respuesta.url && respuesta.clave) {
+          var enlace = document.createElement('a');
+          enlace.href = respuesta.url;
+          enlace.target = '_blank';
+          enlace.rel = 'noopener';
+          enlace.textContent = 'Abrir ' + respuesta.clave;
+          caja.appendChild(enlace);
+        }
+
+        if (respuesta.ok) form.reset();
+      }
+
+      function mostrar(mensaje, estado) {
+        caja.replaceChildren();
+        caja.className = 'resultado visible' + (estado ? ' ' + estado : '');
+        var texto = document.createElement('p');
+        texto.textContent = mensaje;
+        caja.appendChild(texto);
+      }
+    </script>
+  </body>
+</html>

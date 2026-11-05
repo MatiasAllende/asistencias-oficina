@@ -1,0 +1,5 @@
+README.md
+.git/**
+.gitignore
+.clasp.json.example
+**/.DS_Store
