@@ -1,0 +1,135 @@
+COMANDOS PARA CREAR EL PROYECTO EN OTRA PC
+==========================================
+
+Esto es para la PC personal, con la cuenta de la UTN.
+Correr cada bloque en la terminal, en este orden.
+
+--------------------------------------------------
+1. CLONAR EL REPO
+--------------------------------------------------
+
+git clone https://github.com/MatiasAllende/asistencias-oficina.git
+cd asistencias-oficina
+
+--------------------------------------------------
+2. ENTRAR CON CLASP (cuenta de la UTN)
+--------------------------------------------------
+
+npx @google/clasp login
+
+Se abre el navegador. Elegi la cuenta de la UTN, no el Gmail personal.
+Si pide activar la API de Apps Script, entra a:
+https://script.google.com/home/usersettings
+y activala. Despues corre el comando de nuevo.
+
+--------------------------------------------------
+3. CREAR EL PROYECTO DE APPS SCRIPT
+--------------------------------------------------
+
+cp .clasp.json.example .clasp.json
+npx @google/clasp create --title "Alta de tickets" --type webapp --rootDir .
+
+Si pregunta si reemplaza appsscript.json, responder que NO.
+
+--------------------------------------------------
+4. SUBIR EL CODIGO
+--------------------------------------------------
+
+npx @google/clasp push
+
+Si pregunta si sobreescribe, responder que SI.
+
+--------------------------------------------------
+5. CARGAR LAS PROPIEDADES (en el navegador, no en la terminal)
+--------------------------------------------------
+
+Abrir el proyecto con:
+  npx @google/clasp open
+
+En el editor de Apps Script:
+  Configuracion del proyecto (engranaje)
+  -> Propiedades del script
+  -> Agregar propiedad
+
+Cargar estas, una por una:
+
+  JIRA_EMAIL            email de la cuenta de Atlassian que crea los tickets
+  JIRA_API_TOKEN        API token de esa cuenta
+  JIRA_BASE             https://TU-SITIO.atlassian.net
+  SPREADSHEET_ID        id de la planilla (lo que va entre /d/ y /edit en la URL)
+  JIRA_PROJECT_KEY      clave del proyecto, por ejemplo PDSE
+  JIRA_ISSUE_TYPE       tipo de issue tal como aparece en Jira, por ejemplo Ayuda
+
+Opcional:
+  LOG_SHEET             nombre de la pestaña de historial (por defecto Log)
+
+Apretar "Guardar las propiedades de las secuencias de comandos".
+
+--------------------------------------------------
+6. COMPARTIR LA PLANILLA
+--------------------------------------------------
+
+Abrir la planilla y compartirla como EDITOR con la cuenta de la UTN.
+
+--------------------------------------------------
+7. PROBAR LA CONFIGURACION (no crea tickets)
+--------------------------------------------------
+
+En el editor de Apps Script:
+  - elegir la funcion probarConfig
+  - Ejecutar
+  - aceptar los permisos
+  - en Registro de ejecucion tiene que aparecer el usuario de Jira,
+    el nombre de la planilla y el proyecto
+
+--------------------------------------------------
+8. PUBLICAR EL FORMULARIO
+--------------------------------------------------
+
+En el editor de Apps Script:
+  Implementar -> Nueva implementacion -> Aplicacion web
+  Ejecutar como: Yo
+  Quien tiene acceso: solo usuarios del dominio (o Solo yo)
+  Implementar
+
+Copiar la URL de la aplicacion web. Esa es la que usan los tecnicos.
+
+--------------------------------------------------
+9. TECNICOS
+--------------------------------------------------
+
+Los tecnicos estan en TECNICOS, dentro de Code.gs. Tienen que quedar
+con el nombre (apodo) y el email de Jira de cada uno. Hoy hay un
+ejemplo ("Tecnico 1"). Para cambiarlos, editar Code.gs y despues
+volver a correr el paso 4 y crear una version nueva (paso 10).
+
+--------------------------------------------------
+10. ACTUALIZAR DESPUES DE CAMBIAR EL CODIGO
+--------------------------------------------------
+
+npx @google/clasp push
+
+Y en Apps Script:
+  Implementar -> Administrar implementaciones
+  -> editar la aplicacion web -> Nueva version -> Implementar
+
+Sin esto, la URL publicada sigue mostrando la version anterior.
+
+--------------------------------------------------
+11. GUARDAR CAMBIOS EN GITHUB
+--------------------------------------------------
+
+git add -A
+git commit -m "descripcion del cambio"
+git push
+
+--------------------------------------------------
+NOTAS
+--------------------------------------------------
+
+- .clasp.json no se sube a GitHub (esta en .gitignore). Es el enlace
+  al proyecto de Apps Script de cada cuenta. Cada PC tiene el suyo.
+- Las credenciales de Jira no estan en el repo. Viven en las
+  propiedades del script de Apps Script.
+- No hacer clasp push desde una PC con un .clasp.json que apunte a
+  otro proyecto: pisa el codigo de ese proyecto.

@@ -219,9 +219,11 @@
 
       <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
 
+      <? if (spreadsheetUrl) { ?>
       <footer>
         <a id="historial" href="<?= spreadsheetUrl ?>" target="_blank" rel="noopener">Ver historial</a>
       </footer>
+      <? } ?>
     </main>
 
     <script>

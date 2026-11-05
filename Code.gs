@@ -1,5 +1,5 @@
 /**
- * Alta de tickets. Reemplaza el workflow de n8n IUAhbDjd4N22fMLf.
+ * Alta de tickets. Formulario web que crea un issue en Jira y lo anota en una planilla.
  *
  * Desde el navegador solo se pueden llamar doGet, crearTicket y probarConfig.
  * El resto termina en _ para que google.script.run no las alcance: leerConfig_
@@ -26,8 +26,6 @@
  */
 
 var DEFAULTS = {
-  JIRA_BASE: 'https://itti-digital.atlassian.net',
-  SPREADSHEET_ID: '1j77bg03pQPwTRj3PJSRos0fG_mGUPIFyuGZWO7JZNmI',
   LOG_SHEET: 'Log'
 };
 
@@ -49,14 +47,7 @@ var TIPOS_USUARIO = ['User', 'Vip'];
 // El formulario muestra el apodo. El email es el que se busca en Jira.
 // Si queda vacío, el alta de ese técnico se rechaza y no se crea el ticket.
 var TECNICOS = [
-  { nombre: 'Ale', email: 'alejandro.vazzano@itti.digital' },
-  { nombre: 'Ari', email: 'ariel.martinez@itti.digital' },
-  { nombre: 'Gus', email: 'gustavo.acosta@itti.digital' },
-  { nombre: 'Mati', email: 'matias.allende@itti.digital' },
-  { nombre: 'Sofi', email: 'sofia.bruno@itti.digital' },
-  { nombre: 'Sofi Cuiñas', email: 'sofia.cuinas@itti.digital' },
-  { nombre: 'Tomi', email: 'tomas.roldan@itti.digital' },
-  { nombre: 'Valen', email: 'valentin.iglesias@itti.digital' }
+  { nombre: 'Técnico 1', email: 'tecnico1@ejemplo.com' }
 ];
 
 var LOG_HEADERS = [
@@ -459,8 +450,12 @@ function leerConfig_() {
   var categoryFieldType = limpiar_(stored.JIRA_CATEGORY_FIELD_TYPE).toLowerCase();
 
   var missing = [];
+  var base = limpiar_(stored.JIRA_BASE).replace(/\/$/, '');
+  var spreadsheetId = limpiar_(stored.SPREADSHEET_ID);
   if (!email) missing.push('JIRA_EMAIL');
   if (!token) missing.push('JIRA_API_TOKEN');
+  if (!base) missing.push('JIRA_BASE');
+  if (!spreadsheetId) missing.push('SPREADSHEET_ID');
   if (!projectKey) missing.push('JIRA_PROJECT_KEY');
   if (!issueType) missing.push('JIRA_ISSUE_TYPE');
   if (missing.length) {
@@ -471,10 +466,10 @@ function leerConfig_() {
   }
 
   return {
-    base: String(stored.JIRA_BASE || DEFAULTS.JIRA_BASE).replace(/\/$/, ''),
+    base: base,
     email: email,
     token: token,
-    spreadsheetId: limpiar_(stored.SPREADSHEET_ID) || DEFAULTS.SPREADSHEET_ID,
+    spreadsheetId: spreadsheetId,
     projectKey: projectKey,
     issueType: issueType,
     categoryFieldId: categoryFieldId,
@@ -484,8 +479,8 @@ function leerConfig_() {
 }
 
 function urlPlanilla_() {
-  var stored = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  var id = limpiar_(stored) || DEFAULTS.SPREADSHEET_ID;
+  var id = limpiar_(PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID'));
+  if (!id) return '';
   return 'https://docs.google.com/spreadsheets/d/' + id + '/edit';
 }
 
